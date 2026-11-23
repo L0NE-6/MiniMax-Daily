@@ -1,0 +1,76 @@
+name: MiniMax Daily
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: minimax-daily
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test tooling
+        run: python -m pip install "ruff>=0.9,<1"
+
+      - name: Run tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python -m unittest discover -s tests -p "test_minimax_daily.py" -v
+
+      - name: Compile
+        run: python -m compileall -q minimax_daily.py tests
+
+      - name: Lint
+        run: ruff check .
+
+  signin:
+    if: github.event_name == 'workflow_dispatch'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TZ: Asia/Shanghai
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # The auth payload exists only for this runner. This workflow never
+      # commits it, uploads it as an artifact, or writes it back to a public repo.
+      - name: Write ephemeral MiniMax auth
+        env:
+          MINIMAX_AUTH_JSON: ${{ secrets.MINIMAX_AUTH_JSON }}
+        run: |
+          set -euo pipefail
+          if [ -z "${MINIMAX_AUTH_JSON:-}" ]; then
+            echo "::error::MINIMAX_AUTH_JSON is required for workflow_dispatch."
+            exit 1
+          fi
+          umask 077
+          printf '%s\n' "$MINIMAX_AUTH_JSON" > "$RUNNER_TEMP/auth.json"
+          python -c 'import json, os; json.load(open(os.path.join(os.environ["RUNNER_TEMP"], "auth.json"), encoding="utf-8"))'
+          echo "MINIMAX_OAUTH_AUTH_FILE=$RUNNER_TEMP/auth.json" >> "$GITHUB_ENV"
+
+      - name: Run MiniMax sign-in
+        run: python minimax_daily.py auto

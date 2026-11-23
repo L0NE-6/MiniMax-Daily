@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "minimax-daily"
+version = "1.0.0"
+description = "MiniMax Code daily sign-in helper for L0NE-6"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+  { name = "L0NE-6", url = "https://github.com/L0NE-6" },
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/L0NE-6/MiniMax-Daily"
+Issues = "https://github.com/L0NE-6/MiniMax-Daily/issues"
+
+[tool.setuptools]
+py-modules = ["minimax_daily"]
+
+[tool.ruff]
+target-version = "py38"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
