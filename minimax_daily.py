@@ -8,7 +8,7 @@
 凭据是 **不透明 token**（`mmoat_` 前缀，非 JWT），访问签到接口需带
 `Authorization: Bearer <accessToken>`。
 
-accessToken 有效期 1 小时，refreshToken 可调 `https://account.minimax.cn/oauth2/token`
+accessToken 有效期 1 小时，refreshToken 可调所选站点的 `/oauth2/token`
 （grant_type=refresh_token）自助续期，因此脚本可在客户端不在线时长期免登录运行。
 
 ⚠️⚠️ refresh token 是 **轮换制**（服务端每次刷新都换发新的 refresh token，旧 token 立即作废）。
@@ -24,8 +24,12 @@ accessToken 有效期 1 小时，refreshToken 可调 `https://account.minimax.cn
 且用 `token` 请求头 + query 参数传参。脚本保留该路径作为回退。
 
 接口：
-  GET  https://agent.minimax.cn/minimax-cloud/api/v1/signin/status  查询签到面板
-  POST https://agent.minimax.cn/minimax-cloud/api/v1/signin/claim   领取今日积分
+  GET  <site>/minimax-cloud/api/v1/signin/status  查询签到面板
+  POST <site>/minimax-cloud/api/v1/signin/claim   领取今日积分
+
+站点：
+  MINIMAX_SITE=cn      国内版（默认，agent.minimax.cn）
+  MINIMAX_SITE=global  国际版（agent.minimax.io）
 
 签名协议：
   x-timestamp = 秒级时间戳
@@ -58,9 +62,34 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-API_BASE = "https://agent.minimax.cn"
-OAUTH_TOKEN_ENDPOINT = "https://account.minimax.cn/oauth2/token"
-OAUTH_DEVICE_ENDPOINT = "https://account.minimax.cn/oauth2/device/code"
+SITE_ENV = "MINIMAX_SITE"
+
+
+def site_profile(region=None):
+    """Return endpoint and auth-path settings for the selected MiniMax Code site."""
+    value = str(region or os.environ.get(SITE_ENV, "cn") or "cn").strip().lower()
+    if value in ("global", "intl", "international", "en", "io"):
+        return {
+            "id": "global",
+            "api_base": "https://agent.minimax.io",
+            "oauth_token": "https://account.minimax.io/oauth2/token",
+            "oauth_device": "https://account.minimax.io/oauth2/device/code",
+            "auth_region": "en",
+        }
+    return {
+        "id": "cn",
+        "api_base": "https://agent.minimax.cn",
+        "oauth_token": "https://account.minimax.cn/oauth2/token",
+        "oauth_device": "https://account.minimax.cn/oauth2/device/code",
+        "auth_region": "cn",
+    }
+
+
+SITE = site_profile()
+API_BASE = SITE["api_base"]
+OAUTH_TOKEN_ENDPOINT = SITE["oauth_token"]
+OAUTH_DEVICE_ENDPOINT = SITE["oauth_device"]
+AUTH_REGION = SITE["auth_region"]
 OAUTH_CLIENT_ID = "mcode-public"
 OAUTH_SCOPE = "agent.default"
 OAUTH_AUDIENCE = "agent-backend"
@@ -183,7 +212,9 @@ def _auth_file_candidates():
     override = os.environ.get("MINIMAX_OAUTH_AUTH_FILE")
     if override:
         return [override]
-    return sorted(glob.glob(os.path.join(home, OAUTH_AUTH_GLOB)))
+    candidates = sorted(glob.glob(os.path.join(home, OAUTH_AUTH_GLOB)))
+    marker = os.sep + AUTH_REGION + os.sep
+    return [path for path in candidates if marker in path]
 
 
 def read_auth_payload(path):
@@ -445,14 +476,28 @@ def find_legacy_jwt():
     return None
 
 
-def real_user_id():
-    """从桌面端配置 JSON 取 realUserID；取不到就返回 0（服务端不严格校验该值）。"""
+def real_user_id(token=None, kind=None):
+    """Resolve realUserID from env, desktop config, or the account identity API."""
+    override = os.environ.get("MINIMAX_REAL_USER_ID", "").strip()
+    if override:
+        return override
     try:
         with open(os.path.join(os.path.expanduser("~"), CONFIG_REL), "r", encoding="utf-8") as f:
             cfg = json.load(f)
-        return str(cfg.get("user", {}).get("realUserID") or 0)
+        value = str(cfg.get("user", {}).get("realUserID") or "").strip()
+        if value:
+            return value
     except Exception:
-        return "0"
+        pass
+    if token:
+        code, body = signed_request("/v1/api/user/info", token, kind or "oauth", "0")
+        if code == 200 and isinstance(body, dict):
+            data = body.get("data") or {}
+            user = data.get("userInfo") or data.get("user_info") or {}
+            value = str(user.get("realUserID") or user.get("real_user_id") or "").strip()
+            if value:
+                return value
+    return "0"
 
 
 # --------------------------------------------------------------------------
@@ -517,7 +562,7 @@ def checkin(claim=False):
         return 2, {"result": "NO_AUTH", "report": (
             "未找到登录凭据（新版 OAuth 凭据文件与旧版 leveldb JWT 均无），"
             "请打开 MiniMax Code 客户端重新登录")}
-    uid = real_user_id()
+    uid = real_user_id(token, kind)
 
     scode, sbody = signed_request("/minimax-cloud/api/v1/signin/status", token, kind, uid)
     if scode == -1:
@@ -652,7 +697,7 @@ def _store_new_credential(access, refresh, expires_in_ms):
     """
     home = os.path.expanduser("~")
     auth_home = os.path.join(home, ".minimax", "auth")
-    auth_dir = os.path.join(auth_home, "prod", "cn", OAUTH_CLIENT_ID)
+    auth_dir = os.path.join(auth_home, "prod", AUTH_REGION, OAUTH_CLIENT_ID)
     os.makedirs(auth_dir, mode=0o700, exist_ok=True)
     path = os.path.join(auth_dir, "auth.json")
     state_path = os.path.join(auth_dir, "auth-state.json")
@@ -664,7 +709,7 @@ def _store_new_credential(access, refresh, expires_in_ms):
         account = base64.urlsafe_b64encode(hashlib.sha256(
             ("%s\0%s" % (auth_home, OAUTH_CLIENT_ID)).encode()).digest()
         ).decode().rstrip("=")
-        key = "com.minimax.mcode.oauth.prod.cn\0%s" % account
+        key = "com.minimax.mcode.oauth.prod.%s\0%s" % (AUTH_REGION, account)
 
     state = read_auth_payload(state_path) or {}
     new_generation = max(int(state.get("generation") or 0), 0) + 1
@@ -697,7 +742,7 @@ def _store_new_credential(access, refresh, expires_in_ms):
         "scopes": [OAUTH_SCOPE],
         "audience": OAUTH_AUDIENCE,
         "buildEnv": "prod",
-        "region": "cn",
+        "region": AUTH_REGION,
         "generation": new_generation,
     })
     state.pop("refresh", None)

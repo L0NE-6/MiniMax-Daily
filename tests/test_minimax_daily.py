@@ -21,6 +21,35 @@ STATUS_ALREADY = {
 
 
 class MiniMaxDailyTests(unittest.TestCase):
+    def test_site_profiles_are_distinct(self):
+        cn = MODULE.site_profile("cn")
+        global_site = MODULE.site_profile("global")
+        self.assertEqual("https://agent.minimax.cn", cn["api_base"])
+        self.assertEqual("cn", cn["auth_region"])
+        self.assertEqual("https://agent.minimax.io", global_site["api_base"])
+        self.assertEqual("https://account.minimax.io/oauth2/token", global_site["oauth_token"])
+        self.assertEqual("en", global_site["auth_region"])
+
+    def test_real_user_id_can_come_from_identity_api(self):
+        with mock.patch.dict(MODULE.os.environ, {}, clear=True), \
+                mock.patch("builtins.open", side_effect=OSError), \
+                mock.patch.object(
+                    MODULE,
+                    "signed_request",
+                    return_value=(
+                        200,
+                        {
+                            "data": {
+                                "userInfo": {
+                                    "realUserID": "real-user-42",
+                                }
+                            }
+                        },
+                    ),
+                ):
+            value = MODULE.real_user_id("token", "oauth")
+        self.assertEqual("real-user-42", value)
+
     def test_no_auth_is_not_success(self):
         with mock.patch.object(MODULE, "get_bearer_token", return_value=(None, None)):
             code, out = MODULE.checkin(claim=True)

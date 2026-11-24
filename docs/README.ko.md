@@ -4,7 +4,12 @@
 
 [简体中文](../README.md) · [English](README.en.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · **한국어** · [Português (BR)](README.pt-BR.md)
 
-> **L0NE-6 오리지널 유지보수** · 버전: **v1.0.0** (2026-11-23)
+> **L0NE-6 오리지널 유지보수** · 버전: **v1.1.0** (2026-11-24)
+
+`MINIMAX_SITE=cn`은 중국 사이트, `MINIMAX_SITE=global`은
+`agent.minimax.io`와 `account.minimax.io`를 사용합니다. 두 사이트의 토큰은
+호환되지 않습니다. 국제판 인증 파일은 보통
+`~/.minimax/auth/prod/en/mcode-public/auth.json`에 있습니다.
 
 ## 사용 경계
 
@@ -19,7 +24,9 @@
 ## 빠른 시작
 
 1. MiniMax Code 데스크톱 클라이언트에서 로그인합니다.
-2. 보통 `~/.minimax/auth/prod/cn/mcode-public/auth.json`에 있는 OAuth 파일을 찾습니다.
+2. OAuth 파일을 찾습니다. 중국판은 보통
+   `~/.minimax/auth/prod/cn/mcode-public/auth.json`, 국제판은 보통
+   `~/.minimax/auth/prod/en/mcode-public/auth.json`에 있습니다.
 3. 다음 명령을 실행합니다.
 
 ```bash

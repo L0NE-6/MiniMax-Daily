@@ -4,7 +4,12 @@
 
 [简体中文](../README.md) · [English](README.en.md) · [繁體中文](README.zh-Hant.md) · **日本語** · [한국어](README.ko.md) · [Português (BR)](README.pt-BR.md)
 
-> **L0NE-6 オリジナルメンテナンス** · バージョン：**v1.0.0**（2026-11-23）
+> **L0NE-6 オリジナルメンテナンス** · バージョン：**v1.1.0**（2026-11-24）
+
+`MINIMAX_SITE=cn` は中国サイト、`MINIMAX_SITE=global` は
+`agent.minimax.io` と `account.minimax.io` を使用します。両サイトのトークンは
+共通ではありません。国際版の認証ファイルは通常
+`~/.minimax/auth/prod/en/mcode-public/auth.json` にあります。
 
 ## 利用範囲
 
@@ -19,7 +24,9 @@ MiniMax Code の Shared MCode OAuth 認証ファイルを読み、アクセス�
 ## クイックスタート
 
 1. MiniMax Code デスクトップクライアントでログインします。
-2. 通常は `~/.minimax/auth/prod/cn/mcode-public/auth.json` にある OAuth ファイルを確認します。
+2. OAuth ファイルを確認します。中国版は通常
+   `~/.minimax/auth/prod/cn/mcode-public/auth.json`、国際版は通常
+   `~/.minimax/auth/prod/en/mcode-public/auth.json` にあります。
 3. 次のコマンドを実行します。
 
 ```bash

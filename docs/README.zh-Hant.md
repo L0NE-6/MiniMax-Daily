@@ -4,7 +4,11 @@
 
 [简体中文](../README.md) · [English](README.en.md) · **繁體中文** · [日本語](README.ja.md) · [한국어](README.ko.md) · [Português (BR)](README.pt-BR.md)
 
-> **L0NE-6 原創維護** · 版本：**v1.0.0**（2026-11-23）
+> **L0NE-6 原創維護** · 版本：**v1.1.0**（2026-11-24）
+
+`MINIMAX_SITE=cn` 使用國內站；`MINIMAX_SITE=global` 使用
+`agent.minimax.io` 與 `account.minimax.io`，兩站權杖不通用。國際版憑據通常位於
+`~/.minimax/auth/prod/en/mcode-public/auth.json`。
 
 ## 使用邊界
 
@@ -19,7 +23,8 @@
 ## 快速開始
 
 1. 在 MiniMax Code 桌面端完成登入。
-2. 找到 OAuth 檔案，通常位於 `~/.minimax/auth/prod/cn/mcode-public/auth.json`。
+2. 找到 OAuth 檔案：國內版通常位於 `~/.minimax/auth/prod/cn/mcode-public/auth.json`，
+   國際版通常位於 `~/.minimax/auth/prod/en/mcode-public/auth.json`。
 3. 執行：
 
 ```bash

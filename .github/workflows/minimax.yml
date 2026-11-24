@@ -73,4 +73,7 @@ jobs:
           echo "MINIMAX_OAUTH_AUTH_FILE=$RUNNER_TEMP/auth.json" >> "$GITHUB_ENV"
 
       - name: Run MiniMax sign-in
+        env:
+          MINIMAX_SITE: ${{ vars.MINIMAX_SITE || 'cn' }}
+          MINIMAX_REAL_USER_ID: ${{ secrets.MINIMAX_REAL_USER_ID }}
         run: python minimax_daily.py auto

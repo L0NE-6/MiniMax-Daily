@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "minimax-daily"
-version = "1.0.0"
+version = "1.1.0"
 description = "MiniMax Code daily sign-in helper for L0NE-6"
 readme = "README.md"
 requires-python = ">=3.8"

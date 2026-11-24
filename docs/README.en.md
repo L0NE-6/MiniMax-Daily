@@ -4,7 +4,12 @@
 
 [简体中文](../README.md) · **English** · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Português (BR)](README.pt-BR.md)
 
-> **Originally maintained by L0NE-6** · Version: **v1.0.0** (2026-11-23)
+> **Originally maintained by L0NE-6** · Version: **v1.1.0** (2026-11-24)
+
+`MINIMAX_SITE=cn` uses the China site. `MINIMAX_SITE=global` uses
+`agent.minimax.io` and `account.minimax.io`; tokens from the two sites are not
+interchangeable. The international auth path is normally
+`~/.minimax/auth/prod/en/mcode-public/auth.json`.
 
 ## Usage boundary
 
@@ -19,7 +24,8 @@ The main flow uses only the Python standard library and supports Python 3.8 or n
 ## Quick start
 
 1. Sign in with the MiniMax Code desktop client.
-2. Locate the OAuth file, normally `~/.minimax/auth/prod/cn/mcode-public/auth.json`.
+2. Locate the OAuth file, normally `~/.minimax/auth/prod/cn/mcode-public/auth.json`
+   for China or `~/.minimax/auth/prod/en/mcode-public/auth.json` for Global.
 3. Run:
 
 ```bash

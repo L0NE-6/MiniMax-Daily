@@ -6,7 +6,7 @@
 
 **MiniMax Code 每日签到 · 凭据自动续期 · 单文件运行 · 青龙与 GitHub Actions 友好**
 
-> **L0NE-6 原创维护** · 当前版本：**v1.0.0**（2026-11-23）
+> **L0NE-6 原创维护** · 当前版本：**v1.1.0**（2026-11-24）
 
 [简体中文](README.md) · [English](docs/README.en.md) · [繁體中文](docs/README.zh-Hant.md) · [日本語](docs/README.ja.md) · [한국어](docs/README.ko.md) · [Português (BR)](docs/README.pt-BR.md)
 
@@ -42,7 +42,7 @@
 | 维度 | 说明 |
 | :--- | :--- |
 | **做什么** | 读取 MiniMax Code 登录凭据，自动续期访问令牌，查询签到状态并领取当日积分。 |
-| **输入** | MiniMax `auth.json`，或旧版 MiniMax leveldb 目录。 |
+| **输入** | MiniMax `auth.json`，或旧版 MiniMax leveldb 目录；支持国内版与国际版站点。 |
 | **输出** | 单行 JSON，包含 `CLAIMED`、`ALREADY`、`PENDING`、`NO_SESSION` 等状态，以及积分和连签天数。 |
 | **部署** | 青龙面板、GitHub Actions、Windows / Linux 本地运行。 |
 | **依赖** | Python 3.8+，主流程仅使用标准库。 |
@@ -64,7 +64,7 @@
 
 ### 1. Shared MCode OAuth
 
-新版 MiniMax Code 将登录态写入类似 `~/.minimax/auth/<buildEnv>/<region>/mcode-public/auth.json` 的文件。脚本会从 `records` 中选择有效期最晚的凭据，并用 Refresh Token 自助续期。
+新版 MiniMax Code 将登录态写入类似 `~/.minimax/auth/<buildEnv>/<region>/mcode-public/auth.json` 的文件。国内版默认使用 `cn`，国际版使用 `en`。脚本会从对应站点的 `records` 中选择有效期最晚的凭据，并用 Refresh Token 自助续期。
 
 ### 2. 与桌面端互斥
 
@@ -114,6 +114,15 @@ Refresh Token 是轮换制。脚本使用与桌面端兼容的目录锁，在锁
 ```
 
 脚本会优先自动查找默认路径。青龙、容器或 Actions 无法直接访问桌面目录时，用 `MINIMAX_OAUTH_AUTH_FILE` 指向实际文件。
+
+国内版与国际版使用独立站点和令牌，不能混用：
+
+| 变量 | 值 | 站点 |
+| :--- | :--- | :--- |
+| `MINIMAX_SITE` | `cn`（默认） | `agent.minimax.cn` / `account.minimax.cn` |
+| `MINIMAX_SITE` | `global` | `agent.minimax.io` / `account.minimax.io` |
+
+国际版默认读取 `~/.minimax/auth/prod/en/mcode-public/auth.json`。如果桌面配置无法提供 `realUserID`，脚本会调用账号身份接口读取；也可以显式设置 `MINIMAX_REAL_USER_ID`。
 
 ---
 
@@ -175,6 +184,8 @@ task minimax_daily.py auto
 | `MINIMAX_OAUTH_AUTH_FILE` | 条件必填 | 自动查找 | 新版 MiniMax OAuth `auth.json` 的路径。青龙、容器和 Actions 建议显式设置。 |
 | `MINIMAX_LS_LEVELDB` | 可选 | 自动查找 | 旧版 MiniMax leveldb 目录覆盖路径。仅在新版 OAuth 凭据不存在时使用。 |
 | `MINIMAX_DESKTOP_VERSION` | 可选 | `3.1.6` | 请求头中的 MiniMax 桌面端版本。仅在协议版本需要覆盖时设置。 |
+| `MINIMAX_SITE` | 可选 | `cn` | `cn` 国内版，`global` 国际版；两站令牌不通用。 |
+| `MINIMAX_REAL_USER_ID` | 可选 | 自动读取 | 账号 `realUserID` 覆盖值；自动读取失败时使用。 |
 
 环境变量只保存路径或版本，不应把 Token 原文写进命令历史、README 或日志。
 
