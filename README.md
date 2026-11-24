@@ -19,7 +19,7 @@
 <img src="https://img.shields.io/badge/Deploy-%E9%9D%92%E9%BE%99%20%7C%20GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" />
 <img src="https://img.shields.io/badge/License-MIT-F472B6?style=for-the-badge" />
 
-[✨ 速览](#-30-秒速览) · [🧩 原理](#-工作原理) · [🚀 青龙](#-部署方式一青龙面板) · [☁️ Actions](#-部署方式二github-actions) · [🔧 环境变量](#-环境变量) · [⌨️ CLI](#-命令行-cli) · [✅ 成功判据](#-成功判据) · [🚫 使用边界](#usage-policy) · [✦ 星轨](#-星轨-star-history)
+[✨ 速览](#-30-秒速览) · [🧩 原理](#-工作原理) · [🚀 青龙](#-部署方式一青龙面板) · [☁️ Actions](#-部署方式二github-actions) · [🔧 环境变量](#-环境变量) · [⌨️ CLI](#-命令行-cli) · [🧭 结果码](#result-codes) · [✅ 成功判据](#-成功判据) · [🧠 原则](#design) · [🚫 使用边界](#usage-policy) · [✦ 星轨](#-星轨-star-history)
 
 </div>
 
@@ -209,6 +209,22 @@ python minimax_daily.py login
 
 ---
 
+<a id="result-codes"></a>
+## 🧭 结果码
+
+| 结果码 | 是否成功 | 含义 |
+| :--- | :---: | :--- |
+| `CLAIMED` | ✅ | 本轮领取回执为 `claim_result=1` |
+| `ALREADY` | ✅ | 今日已签到，或领取回执为 `claim_result=2` |
+| `PENDING` | ✅ | 查询模式确认今日可领取，未执行 claim |
+| `INACTIVE` | ❌ | 活动未开启、今日项不存在或不可领取 |
+| `NO_AUTH` | ❌ | 国内/国际对应区域没有可用登录凭据 |
+| `NO_SESSION` | ❌ | 登录态失效，需要重新登录 |
+| `NETWORK` | ❌ | 网络不可达或请求未送达 |
+| `ERROR` | ❌ | 状态接口、领取接口或脚本运行异常 |
+
+---
+
 ## ✅ 成功判据
 
 | 结果 | 含义 | 退出码 |
@@ -278,6 +294,19 @@ ruff check .
 
 ---
 
+<a id="design"></a>
+## 🧠 设计原则
+
+- **区域隔离**：`cn` 与 `global` 使用不同站点、OAuth 区域和令牌，不跨站复用；
+- **先查后领**：今日已签直接返回 `ALREADY`，不重复 claim；
+- **刷新互斥**：轮换 Refresh Token 时持有与客户端兼容的目录锁；
+- **原子写回**：Access Token、Refresh Token、generation 和 state 同步更新；
+- **双证据成功**：服务端状态或领取回执必须明确；
+- **不输出凭据**：Access Token、Refresh Token、JWT 和 Cookie 不进入日志；
+- **旧版兼容**：新版 OAuth 不存在时才读取旧版 leveldb JWT。
+
+---
+
 ## 🔒 隐私说明
 
 - 仓库不包含账号、手机号、Access Token、Refresh Token、JWT 或设备信息。
@@ -294,6 +323,17 @@ ruff check .
 - 活动未开启、账号无资格或服务端限制不属于脚本可绕过的本地问题。
 - 本项目仅供学习与个人自动化使用。请遵守 MiniMax 服务条款，使用风险自负。
 - 本项目是独立项目，与 MiniMax 官方无隶属、授权或背书关系。
+
+---
+
+## 📦 版本与发布
+
+- 当前版本：`v1.1.0`（2026-11-24）；
+- 每次站点协议、OAuth 行为或签到字段变化单独发布版本；
+- Release 附带完整 ZIP、单文件脚本和 `SHA256SUMS.txt`；
+- 公开包不包含 `auth.json`、Access Token、Refresh Token、JWT 或运行日志。
+
+下载页：<https://github.com/L0NE-6/MiniMax-Daily/releases>
 
 ---
 
